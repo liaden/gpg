@@ -1,4 +1,4 @@
-default[:gpg][:package][:name] = 'gpg'
+default[:gpg][:package][:name] = 'gnupg'
 default[:gpg][:package][:version] = nil
 default[:gpg][:package][:action] = :install # or :upgrade
 default[:gpg][:databag] = 'gpg'

@@ -1,6 +1,8 @@
-include Chef::Mixlib::ShellOut
-include Chef::Mixlib::Checksum
-include GpgHelper
+require 'fileutils'
+
+include Chef::Mixin::ShellOut
+include Chef::Mixin::Checksum
+include GpgUtil
 
 VALID_BATCH_ATTRIBUTES = %w(
   key_type key_length key_usage subkey_type subkey_length subkey_usage
@@ -20,7 +22,8 @@ action :create do
 
   package 'haveged'
 
-  Tempfile.new('batch') do |file|
+  file = Tempfile.new('batch')
+  begin
     VALID_BATCH_ATTRIBUTES.each do |name|
       if(val = new_resource.send(name))
         file.puts [name.split('_').map(&:capitalize).join('-'), val].join(': ')
@@ -37,8 +40,9 @@ action :create do
     cksum = checksum(file.path) << "-#{new_resource.user}"
 
     if(node[:gpg][:generated][new_resource.name] != cksum)
+      FileUtils.chown(new_resource.user, nil, file.path)
       cmd = shell_out!("sudo -u #{new_resource.user} -i gpg --genkey #{file.path}")
-      output = cmd.stdout
+      output = cmd.stdout + cmd.stderr
       public_key = output.split("\n").detect do |line|
         line.start_with?('pub')
       end.to_s.split(' ')[1].to_s.split('/').last
@@ -50,6 +54,7 @@ action :create do
       node.set[:gpg][:generated][new_resource.name] = cksum
       new_resource.updated_by_last_action(true)
     end
-
+  ensure
+    file.unlink
   end
 end

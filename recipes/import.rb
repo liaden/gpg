@@ -5,6 +5,7 @@ data_bag(node[:gpg][:databag]).each do |key_name|
 
   gpg_import key_name do
     val.each do |key, value|
+      next if key.to_s == 'id'
       self.send(key, value)
     end
   end
