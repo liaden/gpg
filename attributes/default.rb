@@ -2,7 +2,7 @@ default[:gpg][:package][:name] = 'gpg'
 default[:gpg][:package][:version] = nil
 default[:gpg][:package][:action] = :install # or :upgrade
 default[:gpg][:databag] = 'gpg'
-
+default[:gpg][:key_id_file] = '/etc/gpg/key_ids.json'
 # This will auto generate local key. It is provided for compat reasons
 # and will use the values below for key generation
 default[:gpg][:auto_generate] = false

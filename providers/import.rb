@@ -1,3 +1,4 @@
+include GpgHelper
 include Chef::Mixlib::ShellOut
 
 def load_current_resource
@@ -28,7 +29,11 @@ action :import do
         if(node[:gpg][:imported][key_type][new_resource.name] != cksum)
           action = ['--import']
           action.push('--allow-secret-key-import') if key_type == :private_key
-          shell_out!("sudo -u #{new_resource.user} -i gpg #{action.join(' ')} #{path}")
+          cmd = shell_out!("sudo -u #{new_resource.user} -i gpg #{action.join(' ')} #{path}")
+          key = cmd.stdout.split("\n").detect do |line|
+            line.start_with?('gpg: key')
+          end.to_s.split(' ')[2].to_s.sub(':', '')
+          save_key_reference(key_type.to_s.split('_').first, new_resource.name, key)
           node.set[:gpg][:imported][key_type][new_resource.name] = cksum
           new_resource.updated_by_last_action(true)
         end
